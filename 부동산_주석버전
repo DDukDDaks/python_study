@@ -1,0 +1,66 @@
+for m in range(len(sido_list)):
+	# sido_list의 수 만큼 m의 변수로 돌린다.
+    gungu_list=get_gungu_info(sido_list[m])
+    # gungu_list에 get_gungu_info함수에 sido리스트를 하나씩 넣어 돌린다.
+    # 예를들어 서울시
+    gungu_apt_list=[0]*len(gungu_list)
+    # gungu_apt_list라는 리스트를 생성함. gungu_list의 수 만큼 0을 넣는다..
+    # 왜하는지는 도저히 모르겠는데, pd concat 할 때 필요한건가?
+    for j in range(len(gungu_list)):#구 마다 하나씩 저장
+    # 군구의 수 만큼 j의 변수로 돌린다. 각 구마다 하나씩 저장.
+        dong_list=get_dong_info(gungu_list[j])
+        # dong_list에 j군구의 동을 담는다.
+        # 뭔뜻이냐면 남구, 중구, 동구 등등
+        dong_apt_list=[0]*len(dong_list)
+        # dong_apt_list라는 리스트를 생성함. dong_list의 갯수만큼0을넣는다.
+        for k in range(len(dong_list)):#동마다 하나씩 저장
+        	# 동의 수 만큼 k의 변수로 돌린다.
+            apt_list=get_apt_list(dong_list[k])
+            # 아파트 리스트에 k동에 해당하는 get_apt_list의 값을 저장한다.
+            # 느티나무아파트, 삼라극동아파트
+            apt_list_data=[0]*len(apt_list)
+            #apt_list_data 리스트 생성 
+            for n in range(len(apt_list)):#아파트 마다 하나씩 저장
+            	# 아파트의 갯수만큼 n의 변수로 돌린다.
+                temp=get_apt_info(apt_list[n])
+                # temp에 n 아파트 값을 넣는다.
+                try:
+                    area_list=temp["complexDetail"]["pyoengNames"].split(", ")
+                    # 평형이 나눠져있으면 area_list에 담는다.
+                    ex_flag=1
+                    # 플래그를 1로 바꾼다.
+                except KeyError:   
+                    ex_flag=0
+                    temp_data=pd.DataFrame(columns=temp_data.columns)
+                    # 에러가 나면 (평형이 없는듯) 플래그를 0으로 하고, 
+                    # temp_data에 temp_data의 컬럼을 그대로 넣은 pd를 생성하고 끝냄.
+                if ex_flag==1:
+                	# 만약 평수가 여러개면,
+                    temp_school=get_school_info(apt_list[n])
+                    # 학교정보 조회 후 temp_school에 넣음
+                    temp_data=pd.DataFrame(index=range(len(area_list)))
+                    # temp_data에 index(세로)를 area_list(평형)수만큼 생성
+                    for i in range(len(area_list)):
+                    	# 평형 갯수 만큼 i변수로 돌린다.
+                        print(temp["complexDetail"]["address"],temp["complexDetail"]["complexName"])
+                        temp_data.loc[i,"아파트명"]=temp["complexDetail"]["complexName"]
+                        # 각종 데이터를 temp_data.loc에 넣는다.
+                        # 여기서 i는 평형갯수
+
+                    #time.sleep(1)
+                apt_list_data[n]=temp_data
+                # 위에서 생성했던 n번째 아파트리스트에 temp_data넣음.
+                # 이걸 아파트 수 만큼 반복.
+            if apt_list_data==[]:
+                dong_apt_list[k]=pd.DataFrame(columns=temp_data.columns)
+                # 만약 아파트리스트에 아무것도 없다면 그냥 빈 pd 를 넣음.
+            else:
+                dong_apt_list[k]=pd.concat(apt_list_data)
+                # 있다면 pd에 concat 함. 이건 아래에다가 추가하는것같음.
+                # 순번이 바뀔 것임.
+        gungu_apt_list[j]=pd.concat(dong_apt_list)
+        # 아파트 작업이 끝나면 j군의 k동 아파트 값이 dong_apt_list에 남음.
+        # 그러면 j 군구의 아파트 리스트에 콘캣.
+        gungu_apt_list[j].to_csv(temp["complexDetail"]["roadAddressPrefix"]+".csv",encoding="CP949")
+    final_data=pd.concat(gungu_apt_list)
+    final_data.to_csv(temp["complexDetail"]["roadAddressPrefix"].split()[0]+".csv",encoding="CP949")
